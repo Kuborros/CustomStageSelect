@@ -1,28 +1,34 @@
-﻿using FP2Lib.Stage;
+﻿using BepInEx;
+using BepInEx.Logging;
+using FP2Lib.Stage;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
 namespace CustomStageSelect.Menus
 {
-    public class MenuStageSelect : MonoBehaviour
+    public class MenuCustomStageSelect : MonoBehaviour
     {
+        private static readonly ManualLogSource MenuLogSource = CustomStageSelect.Logger;
 
         private FPObjectState state;
         private float genericTimer;
         private int buttonCount;
         private float[] startX;
         private float[] targetX;
+        private SpriteRenderer[] menuButtons;
 
-        private int lastStageIndex;
-        private int selectedStageIndex;
+        public Sprite[] menuSpritesRegular;
+        public Sprite[] menuSpritesSelected;
+
+        private int lastStageIndex = -1;
+        private int selectedStageIndex = 0;
         private string selectedStageSceneName;
 
-        private List<CustomStage> stages;
+        private List<CustomStage> stages = new List<CustomStage>();
 
         [HideInInspector]
         public int menuSelection;
-
         public float xOffsetRegular;
         public float xOffsetSelected;
 
@@ -30,15 +36,44 @@ namespace CustomStageSelect.Menus
         public MenuOption[] menuOptions;
         public MenuCursor cursor;
         public GameObject[] pfButtons;
-        public GameObject pfTextBox;
+        public GameObject stageDescriptionBox;
 
         private void Start()
         {
-            buttonCount = menuOptions.Length;
+            buttonCount = 3;
             FPStage.currentStage.SetRequestDisablePausing(this);
 
+            //Load FP2Lib provided stages
+            foreach (CustomStage stage in StageHandler.Stages.Values) 
+            {
+                MenuLogSource.LogDebug("Parsing stage: " + stage.uid);
+                //Only add stages which want to be shown, and are not HUB stages. Skip ones who have no scene string.
+                if (!stage.isHUB && stage.showInCustomStageLoaders && !stage.sceneName.IsNullOrWhiteSpace())
+                {
+                    MenuLogSource.LogDebug("Adding stage: " + stage.name);
+                    stages.Add(stage);
+                }
+            }
+            cursor = gameObject.GetComponentInChildren<MenuCursor>();
+
+            //Setup buttons
+            pfButtons = new GameObject[] {
+                gameObject.transform.GetChild(3).gameObject,
+                gameObject.transform.GetChild(4).gameObject,
+                gameObject.transform.GetChild(5).gameObject
+            };
 
 
+            startX = new float[pfButtons.Length];
+            targetX = new float[pfButtons.Length];
+            menuButtons = new SpriteRenderer[buttonCount];
+            //Used for animations, maybe remove since we don't do that exactly?
+            for (int i = 0; i < buttonCount; i++)
+            {
+                menuButtons[i] = pfButtons[i].GetComponent<SpriteRenderer>();
+                startX[i] = pfButtons[i].transform.position.x;
+                targetX[i] = pfButtons[i].transform.position.x;
+            }
 
             state = new FPObjectState(State_Main);
         }
@@ -64,38 +99,62 @@ namespace CustomStageSelect.Menus
                 float num2 = (pfButtons[i].transform.position.x * (num - 1f) + targetX[i]) / num;
                 float y = pfButtons[i].transform.position.y;
                 float z = pfButtons[i].transform.position.z;
+                //Move cursor to selection
                 if (i == menuSelection)
                 {
-                    cursor.transform.position = new Vector3(num2 - 32f, y, z);
+                    if (i > 0)
+                    {
+                        cursor.transform.position = new Vector3(num2 - 32f, y, z);
+                    }
+                    else
+                    {
+                        cursor.transform.position = new Vector3(num2 - 64f, y, z);
+                    }
                 }
-                pfButtons[i].transform.position = new Vector3(num2, y, z);
-                targetX[i] = 320f + xOffsetRegular;
+                //Update button visuals
                 if (i == menuSelection)
                 {
-                    pfTextBox.transform.position = new Vector3(pfButtons[i].transform.position.x + 144f,pfButtons[i].transform.position.y, pfTextBox.transform.position.z);
-                    targetX[menuSelection] = 320f + xOffsetSelected;
+                        
                 }
             }
             //Stage info
             //Update only when needed
             if (lastStageIndex != selectedStageIndex) 
             {
+                GameObject customStageDisplay = GameObject.Find("CustomStageData");
+                GameObject stageInfoBox = GameObject.Find("StageInfoBox");
+                //Drop out if the custom stage display does not exist.
+                if (customStageDisplay == null) return;
+
                 int stageID = stages[selectedStageIndex].id;
                 string stageName, stageTime, stageAuthor, stageDescription;
+                int stageRank = 0;
+                Sprite stageIcon = null;
                 string destinationScene = "ErrorScene";
-                //Make sure we did not get a cursed stage
-                if (stageID <= FPSaveManager.timeRecord.Length)
+                //Make sure we did not get a cursed broken stage
+                if (stageID <= FPSaveManager.timeRecord.Length + 1)
                 {
                     stageName = stages[selectedStageIndex].name;
-                    stageTime = FPStage.TimeToString(stages[selectedStageIndex].parTime);
+                    stageTime = FPStage.TimeToString(FPSaveManager.timeRecord[stageID]);
+                    stageRank = FPSaveManager.timeRank[stageID];
                     stageAuthor = stages[selectedStageIndex].author;
                     stageDescription = stages[selectedStageIndex].description;
+                    stageIcon = stages[selectedStageIndex].preview;
                     destinationScene = stages[selectedStageIndex].sceneName;
-                }
-                
-                
-            
 
+                    pfButtons[0].GetComponentInChildren<TextMesh>().text = "< Stage " + (selectedStageIndex + 1) + "/" + (stages.Count + 1) + " >" ;
+
+                    customStageDisplay.transform.GetChild(0).GetComponent<SpriteRenderer>().sprite = stageIcon;
+                    customStageDisplay.transform.GetChild(1).GetComponent<TextMesh>().text = stageName;
+                    customStageDisplay.transform.GetChild(3).GetComponent<TextMesh>().text = stageTime;
+                    customStageDisplay.transform.GetChild(5).GetComponent<FPHudDigit>().digitValue = stageRank;
+
+                    stageInfoBox.GetComponentInChildren<TextMesh>().text = "By: " + stageAuthor;
+                    stageInfoBox.GetComponentInChildren<SuperTextMesh>().text = stageDescription;
+                }
+
+                MenuLogSource.LogDebug("Set destination scene to: " + destinationScene);
+                selectedStageSceneName = destinationScene;
                 lastStageIndex = selectedStageIndex;
             }
         }
@@ -179,7 +238,7 @@ namespace CustomStageSelect.Menus
                 genericTimer -= FPStage.deltaTime;
             }
             //Handle Play and Exit buttons.
-            else if (FPStage.menuInput.confirm && menuSelection > 1)
+            else if (FPStage.menuInput.confirm && menuSelection > 0)
             {
                 genericTimer = 0f;
                 state = new FPObjectState(State_Transition);
@@ -208,6 +267,9 @@ namespace CustomStageSelect.Menus
                 {
                     //Set to return to this menu instead of world map
                     FPSaveManager.previousStage = SceneManager.GetActiveScene().name;
+                    //Important! This is how modded stages actually know what ID they are!
+                    FPSaveManager.debugStageID = stages[selectedStageIndex].id;
+                    FPSaveManager.debugStageName = stages[selectedStageIndex].name;
                     //Set the destination to be the custom stage.
                     component.sceneToLoad = selectedStageSceneName;
                 }
