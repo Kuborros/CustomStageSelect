@@ -14,4 +14,14 @@ public class CustomStageSelect : BaseUnityPlugin
         Logger = base.Logger;
         Logger.LogInfo($"Plugin {MyPluginInfo.PLUGIN_GUID} is loaded!");
     }
+
+
+
+    public static bool addCustomStage()
+    {
+
+        return true;
+    }
+
+
 }
