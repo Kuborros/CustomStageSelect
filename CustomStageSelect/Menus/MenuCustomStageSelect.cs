@@ -25,7 +25,7 @@ namespace CustomStageSelect.Menus
         private int selectedStageIndex = 0;
         private string selectedStageSceneName;
 
-        private List<CustomStage> stages = new List<CustomStage>();
+        private List<CustomStage> stages = [];
 
         [HideInInspector]
         public int menuSelection;
@@ -33,10 +33,8 @@ namespace CustomStageSelect.Menus
         public float xOffsetSelected;
 
         [Header("Prefabs")]
-        public MenuOption[] menuOptions;
         public MenuCursor cursor;
         public GameObject[] pfButtons;
-        public GameObject stageDescriptionBox;
 
         private void Start()
         {
@@ -63,6 +61,19 @@ namespace CustomStageSelect.Menus
                 gameObject.transform.GetChild(5).gameObject
             };
 
+            menuSpritesRegular = new Sprite[]
+            {
+                CustomStageSelect.menuAssets.LoadAsset<Sprite>("lock"),
+                CustomStageSelect.menuAssets.LoadAsset<Sprite>("play_off"),
+                CustomStageSelect.menuAssets.LoadAsset<Sprite>("stop_off")
+            };
+
+            menuSpritesSelected = new Sprite[]
+{
+                CustomStageSelect.menuAssets.LoadAsset<Sprite>("lock"),
+                CustomStageSelect.menuAssets.LoadAsset<Sprite>("play_on"),
+                CustomStageSelect.menuAssets.LoadAsset<Sprite>("stop_on")
+};
 
             startX = new float[pfButtons.Length];
             targetX = new float[pfButtons.Length];
@@ -74,6 +85,8 @@ namespace CustomStageSelect.Menus
                 startX[i] = pfButtons[i].transform.position.x;
                 targetX[i] = pfButtons[i].transform.position.x;
             }
+            //Default "Locked" sprite for "Play" button
+            pfButtons[1].GetComponent<SpriteRenderer>().sprite = menuSpritesRegular[0];
 
             state = new FPObjectState(State_Main);
         }
@@ -108,15 +121,32 @@ namespace CustomStageSelect.Menus
                     }
                     else
                     {
-                        cursor.transform.position = new Vector3(num2 - 64f, y, z);
+                        cursor.transform.position = new Vector3(num2 - 96f, y, z);
                     }
                 }
-                //Update button visuals
-                if (i == menuSelection)
-                {
-                        
-                }
             }
+            //Update button visuals
+            switch (menuSelection)
+            {
+                case 0:
+                    pfButtons[1].GetComponent<SpriteRenderer>().sprite = menuSpritesRegular[1];
+                    pfButtons[2].GetComponent<SpriteRenderer>().sprite = menuSpritesRegular[2];
+                    break;
+                case 1:
+                    pfButtons[1].GetComponent<SpriteRenderer>().sprite = menuSpritesSelected[1];
+                    pfButtons[2].GetComponent<SpriteRenderer>().sprite = menuSpritesRegular[2];
+                    break;
+                case 2:
+                    pfButtons[1].GetComponent<SpriteRenderer>().sprite = menuSpritesRegular[1];
+                    pfButtons[2].GetComponent<SpriteRenderer>().sprite = menuSpritesSelected[2];
+                    break;
+            }
+            //Set the lock icon
+            if (stages.Count == 0)
+            {
+                pfButtons[1].GetComponent<SpriteRenderer>().sprite = menuSpritesRegular[0];
+            }
+
             //Stage info
             //Update only when needed
             if (lastStageIndex != selectedStageIndex) 
@@ -142,12 +172,12 @@ namespace CustomStageSelect.Menus
                     stageIcon = stages[selectedStageIndex].preview;
                     destinationScene = stages[selectedStageIndex].sceneName;
 
-                    pfButtons[0].GetComponentInChildren<TextMesh>().text = "< Stage " + (selectedStageIndex + 1) + "/" + (stages.Count + 1) + " >" ;
+                    pfButtons[0].GetComponentInChildren<TextMesh>().text = "< Stage " + (selectedStageIndex + 1) + "/" + (stages.Count) + " >" ;
 
                     customStageDisplay.transform.GetChild(0).GetComponent<SpriteRenderer>().sprite = stageIcon;
                     customStageDisplay.transform.GetChild(1).GetComponent<TextMesh>().text = stageName;
                     customStageDisplay.transform.GetChild(3).GetComponent<TextMesh>().text = stageTime;
-                    customStageDisplay.transform.GetChild(5).GetComponent<FPHudDigit>().digitValue = stageRank;
+                    customStageDisplay.transform.GetChild(5).GetComponent<FPHudDigit>().SetDigitValue(stageRank - 1);
 
                     stageInfoBox.GetComponentInChildren<TextMesh>().text = "By: " + stageAuthor;
                     stageInfoBox.GetComponentInChildren<SuperTextMesh>().text = stageDescription;
@@ -174,9 +204,9 @@ namespace CustomStageSelect.Menus
             else if (FPStage.menuInput.down)
             {
                 menuSelection++;
-                if (menuSelection >= buttonCount)
+                if (menuSelection > 2)
                 {
-                    menuSelection = buttonCount;
+                    menuSelection = 2;
                 }
                 else FPAudio.PlayMenuSfx(1);
             }
@@ -195,21 +225,23 @@ namespace CustomStageSelect.Menus
                 if (menuSelection == 0)
                 {
                     //Only process if there are stages to work with.
-                    if (stages.Count != 0)
+                    //If we only have one stage, we are on proper number already
+                    if (stages.Count > 1)
                     {
-                        if (selectedStageIndex < stages.Count)
+                        if (selectedStageIndex < stages.Count - 1)
                         {
                             selectedStageIndex++;
                         }
                         else selectedStageIndex = 0;
+                        FPAudio.PlayMenuSfx(1);
                     }
                 }
                 //Bottom buttons
                 else if (menuSelection == 1)
                 {
                     menuSelection++;
+                    FPAudio.PlayMenuSfx(1);
                 }
-                FPAudio.PlayMenuSfx(1);
             }
             if (FPStage.menuInput.left)
             {
@@ -217,21 +249,22 @@ namespace CustomStageSelect.Menus
                 if (menuSelection == 0)
                 {
                     //Only process if there are stages to work with.
-                    if (stages.Count != 0)
+                    if (stages.Count > 1)
                     {
                         if (selectedStageIndex > 0)
                         {
                             selectedStageIndex--;
                         }
                         else selectedStageIndex = stages.Count - 1;
+                        FPAudio.PlayMenuSfx(1);
                     }
                 }
                 //Bottom buttons
-                else if (menuSelection == 2)
+                else if (menuSelection <= 2)
                 {
                     menuSelection--;
+                    FPAudio.PlayMenuSfx(1);
                 }
-                FPAudio.PlayMenuSfx(1);
             }
             if (genericTimer > 0f)
             {
@@ -240,10 +273,21 @@ namespace CustomStageSelect.Menus
             //Handle Play and Exit buttons.
             else if (FPStage.menuInput.confirm && menuSelection > 0)
             {
-                genericTimer = 0f;
-                state = new FPObjectState(State_Transition);
-                cursor.optionSelected = true;
-                FPAudio.PlayMenuSfx(2);
+                //Case for no stages loaded
+                if (stages.Count == 0 && menuSelection == 1)
+                {
+                    genericTimer = 0f;
+                    FPAudio.PlayMenuSfx(21);
+                    cursor.optionSelected = true;
+                }
+                //Proper stage or exit selected
+                else
+                {
+                    genericTimer = 0f;
+                    state = new FPObjectState(State_Transition);
+                    cursor.optionSelected = true;
+                    FPAudio.PlayMenuSfx(2);
+                }
             }
             UpdateMenu();
         }

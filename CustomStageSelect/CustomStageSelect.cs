@@ -5,6 +5,7 @@ using System.IO;
 using HarmonyLib;
 using UnityEngine;
 using CustomStageSelect.Patches;
+using System.Collections.Generic;
 
 namespace CustomStageSelect;
 
@@ -16,6 +17,8 @@ public class CustomStageSelect : BaseUnityPlugin
 
     internal static AssetBundle menuAssets;
     internal static AssetBundle menuScene;
+
+    internal static List<CustomStage> extraStages;
 
     private void Awake()
     {
@@ -34,6 +37,7 @@ public class CustomStageSelect : BaseUnityPlugin
 
         Sprite icon = menuAssets.LoadAsset<Sprite>("StageIcon_Custom");
 
+        //Add the stage select as "HUB" - just like the Battlesphere menu.
         CustomStage menuStageSelect = new CustomStage
         {
             uid = "kuborro.customstageselectmenu",
@@ -50,6 +54,7 @@ public class CustomStageSelect : BaseUnityPlugin
 
         Harmony.CreateAndPatchAll(typeof(PatchMenuBasic));
         Harmony.CreateAndPatchAll(typeof(PatchMenuClassic));
+        Harmony.CreateAndPatchAll(typeof(PatchMenuWorldMap));
 
     }
 

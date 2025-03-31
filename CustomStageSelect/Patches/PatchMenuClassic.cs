@@ -15,6 +15,7 @@ namespace CustomStageSelect.Patches
             GameObject mapTilePrefab = CustomStageSelect.menuAssets.LoadAsset<GameObject>("StageIcon_CustomStage");
             GameObject mapTile = GameObject.Instantiate(mapTilePrefab);
 
+            //Create new tile definition object
             MenuClassicTile levelSelectTile = new MenuClassicTile();
 
             levelSelectTile.bgm = __instance.stages[10].bgm;
@@ -30,6 +31,7 @@ namespace CustomStageSelect.Patches
 
             levelSelectTile.stageID = StageHandler.getCustomStageByUid("kuborro.customstageselectmenu").id;
 
+            //Add our tile to the map's location list - then obtain it's index number used for route linking
             __instance.stages = __instance.stages.AddToArray(levelSelectTile);
             int location = Array.IndexOf(__instance.stages, levelSelectTile);
 
