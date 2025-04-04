@@ -15,7 +15,6 @@ namespace CustomStageSelect.Patches
                 returnToLevelSelect = false;
                 return "CustomStageSelect";
             }
-            returnToLevelSelect = false;
             if (FPSaveManager.gameMode == FPGameMode.ADVENTURE)
             {
                 return "AdventureMenu";
@@ -48,6 +47,7 @@ namespace CustomStageSelect.Patches
 
         [HarmonyTranspiler]
         [HarmonyPatch(typeof(FPPauseMenu), "Update", MethodType.Normal)]
+        [HarmonyPatch(typeof(MenuContinue), "State_Main", MethodType.Normal)]
         static IEnumerable<CodeInstruction> PatchPauseMenu(IEnumerable<CodeInstruction> instructions)
         {
             List<CodeInstruction> codes = new List<CodeInstruction>(instructions);
