@@ -13,6 +13,7 @@ namespace CustomStageSelect.Patches
         {
             GameObject markerPrefab = CustomStageSelect.menuAssets.LoadAsset<GameObject>("HubVRArcade");
             MenuText marker = GameObject.Instantiate(markerPrefab).GetComponent<MenuText>();
+            marker.gameObject.transform.parent = __instance.mapScreens[4].gameObject.transform;
 
             //Build our own map marker
             FPMapRequirement requirement = new FPMapRequirement {

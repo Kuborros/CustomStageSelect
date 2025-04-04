@@ -55,16 +55,7 @@ public class CustomStageSelect : BaseUnityPlugin
         Harmony.CreateAndPatchAll(typeof(PatchMenuBasic));
         Harmony.CreateAndPatchAll(typeof(PatchMenuClassic));
         Harmony.CreateAndPatchAll(typeof(PatchMenuWorldMap));
+        Harmony.CreateAndPatchAll(typeof(PatchStageExits));
 
     }
-
-
-
-    public static bool addCustomStage()
-    {
-
-        return true;
-    }
-
-
 }

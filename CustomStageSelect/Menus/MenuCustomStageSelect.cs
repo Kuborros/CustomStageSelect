@@ -1,5 +1,6 @@
 ﻿using BepInEx;
 using BepInEx.Logging;
+using CustomStageSelect.Patches;
 using FP2Lib.Stage;
 using System.Collections.Generic;
 using UnityEngine;
@@ -13,7 +14,7 @@ namespace CustomStageSelect.Menus
 
         private FPObjectState state;
         private float genericTimer;
-        private int buttonCount;
+        private int buttonCount = 3;
         private float[] startX;
         private float[] targetX;
         private SpriteRenderer[] menuButtons;
@@ -38,7 +39,6 @@ namespace CustomStageSelect.Menus
 
         private void Start()
         {
-            buttonCount = 3;
             FPStage.currentStage.SetRequestDisablePausing(this);
 
             //Load FP2Lib provided stages
@@ -316,10 +316,14 @@ namespace CustomStageSelect.Menus
                     FPSaveManager.debugStageName = stages[selectedStageIndex].name;
                     //Set the destination to be the custom stage.
                     component.sceneToLoad = selectedStageSceneName;
+                    //Set the exit to our custom stage select.
+                    PatchStageExits.returnToLevelSelect = true;
                 }
                 // "Exit"
                 else if (menuSelection == 2)
                 {
+                    //Just to be sure
+                    PatchStageExits.returnToLevelSelect = false;
                     //Set appropriate destination map.
                     if (FPSaveManager.gameMode == FPGameMode.ADVENTURE)
                     {
