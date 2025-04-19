@@ -18,8 +18,6 @@ public class CustomStageSelect : BaseUnityPlugin
     internal static AssetBundle menuAssets;
     internal static AssetBundle menuScene;
 
-    internal static List<CustomStage> extraStages;
-
     private void Awake()
     {
         Logger = base.Logger;
@@ -38,7 +36,7 @@ public class CustomStageSelect : BaseUnityPlugin
         Sprite icon = menuAssets.LoadAsset<Sprite>("StageIcon_Custom");
 
         //Add the stage select as "HUB" - just like the Battlesphere menu.
-        CustomStage menuStageSelect = new CustomStage
+        CustomStage menuStageSelect = new()
         {
             uid = "kuborro.customstageselectmenu",
             name = "Zao's VR Arcade",

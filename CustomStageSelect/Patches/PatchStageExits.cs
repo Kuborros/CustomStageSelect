@@ -8,12 +8,12 @@ namespace CustomStageSelect.Patches
     {
         internal static bool returnToLevelSelect = false;
 
-        internal static string getDestinationScene()
+        internal static string GetDestinationScene()
         {
             if (returnToLevelSelect)
             {
                 returnToLevelSelect = false;
-                return "CustomStageSelect";
+                return "ZaosArcadeDebug";
             }
             if (FPSaveManager.gameMode == FPGameMode.ADVENTURE)
             {
@@ -38,7 +38,7 @@ namespace CustomStageSelect.Patches
                 {
                     if (CodeInstructionExtensions.OperandIs(codes[i],"AdventureMenu") || CodeInstructionExtensions.OperandIs(codes[i], "ClassicMenu"))
                     {
-                        codes[i] = Transpilers.EmitDelegate(getDestinationScene);
+                        codes[i] = Transpilers.EmitDelegate(GetDestinationScene);
                     }
                 }
             }
@@ -57,7 +57,7 @@ namespace CustomStageSelect.Patches
                 {
                     if (CodeInstructionExtensions.OperandIs(codes[i], "AdventureMenu") || CodeInstructionExtensions.OperandIs(codes[i], "ClassicMenu"))
                     {
-                        codes[i] = Transpilers.EmitDelegate(getDestinationScene);
+                        codes[i] = Transpilers.EmitDelegate(GetDestinationScene);
                     }
                 }
             }

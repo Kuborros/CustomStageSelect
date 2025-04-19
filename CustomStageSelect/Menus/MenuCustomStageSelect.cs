@@ -3,6 +3,7 @@ using BepInEx.Logging;
 using CustomStageSelect.Patches;
 using FP2Lib.Stage;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
@@ -14,12 +15,13 @@ namespace CustomStageSelect.Menus
 
         private FPObjectState state;
         private float genericTimer;
-        private int buttonCount = 3;
+        private readonly int buttonCount = 3;
         private float[] startX;
         private float[] targetX;
         private SpriteRenderer[] menuButtons;
 
         private static bool introPlayed = false;
+        private static int previousRunStageIndex = -1;
 
         private int lastStageIndex = -1;
         private int selectedStageIndex = 0;
@@ -51,6 +53,9 @@ namespace CustomStageSelect.Menus
                     stages.Add(stage);
                 }
             }
+            //Sort by stage id
+            stages.Sort((x, y) => x.id.CompareTo(y.id));
+
             cursor = gameObject.transform.GetChild(1).gameObject.AddComponent<MenuConsoleCursor>();
 
             //Setup buttons
@@ -63,13 +68,16 @@ namespace CustomStageSelect.Menus
             startX = new float[pfButtons.Length];
             targetX = new float[pfButtons.Length];
             menuButtons = new SpriteRenderer[buttonCount];
-            //Used for animations, maybe remove since we don't do that exactly?
+            //Used for animations
             for (int i = 0; i < buttonCount; i++)
             {
                 menuButtons[i] = pfButtons[i].GetComponent<SpriteRenderer>();
                 startX[i] = pfButtons[i].transform.position.x;
                 targetX[i] = pfButtons[i].transform.position.x;
             }
+            //Restore previous index
+            if (previousRunStageIndex >= 0)
+                selectedStageIndex = previousRunStageIndex;
 
             //Show the loading screen if not seen in this 'session'
             if (!introPlayed)
@@ -77,10 +85,15 @@ namespace CustomStageSelect.Menus
                 genericTimer = 200f;
                 gameObject.transform.GetChild(7).gameObject.SetActive(true);
                 introPlayed = true;
+                UpdateMenu();
                 state = new FPObjectState(State_Intro);
             }
-            else 
+            else
+            {
+                gameObject.transform.GetChild(7).gameObject.SetActive(false);
+                UpdateMenu();
                 state = new FPObjectState(State_Main);
+            }
         }
 
         private void Update()
@@ -147,11 +160,29 @@ namespace CustomStageSelect.Menus
                 GameObject stageInfoBox = gameObject.transform.GetChild(2).gameObject;
                 //Drop out if the custom stage display does not exist.
                 if (customStageDisplay == null) return;
+                //No custom stages loaded
+                if (stages.Count == 0)
+                {
+                    //Set 'no stages loaded' text
+                    pfButtons[0].GetComponentInChildren<SuperTextMesh>().text = "<c=green>CHOOSE STAGE NUM. TO INIT\n< NO STAGE DATA FOUND ></c>";
 
+                    customStageDisplay.transform.GetChild(1).GetComponent<SuperTextMesh>().text = "<c=green>FILE:</c> <c=red>NO DATA</c>";
+                    customStageDisplay.transform.GetChild(3).GetComponent<SuperTextMesh>().text = "--'--\"--";
+                    customStageDisplay.transform.GetChild(5).GetComponent<SuperTextMesh>().text = "?";
+
+                    stageInfoBox.transform.GetChild(0).GetComponent<SuperTextMesh>().text = "<c=green>DEVELOPER:</c> <c=red>NO DATA</c>";
+                    stageInfoBox.transform.GetChild(1).GetComponent<SuperTextMesh>().text = "NO LEVEL ROMS FOUND ON SYSTEM BOARD!\nPLEASE INSTALL REQUIRED CHIPS PER ARCADE OPERATOR MANUAL.\nFOR LEVEL ROM PURCHASE, CONTACT ZAO ENTERPRISES SALES ASSOCIATE AT <c=yellow>GAMEBANANA</c>.";
+
+                    //Set so we no longer keep retrying to render the menu.
+                    lastStageIndex = selectedStageIndex;
+                    return;
+                }
+
+                //Show custom stages.
                 int stageID = stages[selectedStageIndex].id;
                 string stageName, stageTime, stageAuthor, stageDescription;
-                int stageRank = 0;
-                Sprite stageIcon = null;
+                int stageRank;
+                Sprite stageIcon;
                 string destinationScene = "ErrorScene";
                 //Make sure we did not get a cursed broken stage
                 if (stageID <= FPSaveManager.timeRecord.Length + 1)
@@ -169,7 +200,7 @@ namespace CustomStageSelect.Menus
                     customStageDisplay.transform.GetChild(0).GetComponent<SpriteRenderer>().sprite = stageIcon;
                     customStageDisplay.transform.GetChild(1).GetComponent<SuperTextMesh>().text = "<c=green>FILE:</c> " + stageName;
                     customStageDisplay.transform.GetChild(3).GetComponent<SuperTextMesh>().text = stageTime;
-                    customStageDisplay.transform.GetChild(5).GetComponent<SuperTextMesh>().text = rankToString(stageRank);
+                    customStageDisplay.transform.GetChild(5).GetComponent<SuperTextMesh>().text = RankToString(stageRank);
 
                     stageInfoBox.transform.GetChild(0).GetComponent<SuperTextMesh>().text = "<c=green>DEVELOPER:</c> " + stageAuthor;
                     stageInfoBox.transform.GetChild(1).GetComponent<SuperTextMesh>().text = stageDescription;
@@ -324,11 +355,15 @@ namespace CustomStageSelect.Menus
                     component.sceneToLoad = selectedStageSceneName;
                     //Set the exit to our custom stage select.
                     PatchStageExits.returnToLevelSelect = true;
+                    //Save last selected stage
+                    previousRunStageIndex = selectedStageIndex;
                 }
                 // "Exit"
                 else if (menuSelection == 2)
                 {
+                    //Reset the intro and last id
                     introPlayed = false;
+                    previousRunStageIndex = -1;
                     //Just to be sure
                     PatchStageExits.returnToLevelSelect = false;
                     //Set appropriate destination map.
@@ -351,22 +386,23 @@ namespace CustomStageSelect.Menus
             }
         }
 
-        private string rankToString(int rank)
+        private string RankToString(int rank)
         {
             switch (rank)
             {
                 case 0:
-                    return "<c=brown>C</c>";
                 case 1:
-                    return "<c=silver>B</c>";
+                    return "<c=brown>C</c>";
                 case 2:
-                    return "<c=orange>A</c>";
+                    return "<c=silver>B</c>";
                 case 3:
-                    return "<c=yellow>S</c>";
+                    return "<c=orange>A</c>";
                 case 4:
+                    return "<c=yellow>S</c>";
+                case 5:
                     return "<c=rainbow>S</c>";
                 default:
-                    return "<c=red>DATA CORRUPT</c>";
+                    return "<c=white>?</c>";
             }
         }
     }
