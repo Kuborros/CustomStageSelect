@@ -19,8 +19,7 @@ namespace CustomStageSelect.Menus
         private float[] targetX;
         private SpriteRenderer[] menuButtons;
 
-        public Sprite[] menuSpritesRegular;
-        public Sprite[] menuSpritesSelected;
+        private static bool introPlayed = false;
 
         private int lastStageIndex = -1;
         private int selectedStageIndex = 0;
@@ -34,7 +33,7 @@ namespace CustomStageSelect.Menus
         public float xOffsetSelected;
 
         [Header("Prefabs")]
-        public MenuCursor cursor;
+        public MenuConsoleCursor cursor;
         public GameObject[] pfButtons;
 
         private void Start()
@@ -52,7 +51,7 @@ namespace CustomStageSelect.Menus
                     stages.Add(stage);
                 }
             }
-            cursor = gameObject.GetComponentInChildren<MenuCursor>();
+            cursor = gameObject.transform.GetChild(1).gameObject.AddComponent<MenuConsoleCursor>();
 
             //Setup buttons
             pfButtons = new GameObject[] {
@@ -60,20 +59,6 @@ namespace CustomStageSelect.Menus
                 gameObject.transform.GetChild(4).gameObject,
                 gameObject.transform.GetChild(5).gameObject
             };
-
-            menuSpritesRegular = new Sprite[]
-            {
-                CustomStageSelect.menuAssets.LoadAsset<Sprite>("lock"),
-                CustomStageSelect.menuAssets.LoadAsset<Sprite>("play_off"),
-                CustomStageSelect.menuAssets.LoadAsset<Sprite>("stop_off")
-            };
-
-            menuSpritesSelected = new Sprite[]
-{
-                CustomStageSelect.menuAssets.LoadAsset<Sprite>("lock"),
-                CustomStageSelect.menuAssets.LoadAsset<Sprite>("play_on"),
-                CustomStageSelect.menuAssets.LoadAsset<Sprite>("stop_on")
-};
 
             startX = new float[pfButtons.Length];
             targetX = new float[pfButtons.Length];
@@ -85,10 +70,17 @@ namespace CustomStageSelect.Menus
                 startX[i] = pfButtons[i].transform.position.x;
                 targetX[i] = pfButtons[i].transform.position.x;
             }
-            //Default "Locked" sprite for "Play" button
-            pfButtons[1].GetComponent<SpriteRenderer>().sprite = menuSpritesRegular[0];
 
-            state = new FPObjectState(State_Main);
+            //Show the loading screen if not seen in this 'session'
+            if (!introPlayed)
+            {
+                genericTimer = 200f;
+                gameObject.transform.GetChild(7).gameObject.SetActive(true);
+                introPlayed = true;
+                state = new FPObjectState(State_Intro);
+            }
+            else 
+                state = new FPObjectState(State_Main);
         }
 
         private void Update()
@@ -121,7 +113,7 @@ namespace CustomStageSelect.Menus
                     }
                     else
                     {
-                        cursor.transform.position = new Vector3(num2 - 96f, y, z);
+                        cursor.transform.position = new Vector3(200, y, z);
                     }
                 }
             }
@@ -129,30 +121,30 @@ namespace CustomStageSelect.Menus
             switch (menuSelection)
             {
                 case 0:
-                    pfButtons[1].GetComponent<SpriteRenderer>().sprite = menuSpritesRegular[1];
-                    pfButtons[2].GetComponent<SpriteRenderer>().sprite = menuSpritesRegular[2];
+                    pfButtons[1].GetComponentInChildren<SuperTextMesh>().text = "< > LOAD SELECTED LEVEL";
+                    pfButtons[2].GetComponentInChildren<SuperTextMesh>().text = "< > EXIT";
                     break;
                 case 1:
-                    pfButtons[1].GetComponent<SpriteRenderer>().sprite = menuSpritesSelected[1];
-                    pfButtons[2].GetComponent<SpriteRenderer>().sprite = menuSpritesRegular[2];
+                    pfButtons[1].GetComponentInChildren<SuperTextMesh>().text = "<*> LOAD SELECTED LEVEL";
+                    pfButtons[2].GetComponentInChildren<SuperTextMesh>().text = "< > EXIT";
                     break;
                 case 2:
-                    pfButtons[1].GetComponent<SpriteRenderer>().sprite = menuSpritesRegular[1];
-                    pfButtons[2].GetComponent<SpriteRenderer>().sprite = menuSpritesSelected[2];
+                    pfButtons[1].GetComponentInChildren<SuperTextMesh>().text = "< > LOAD SELECTED LEVEL";
+                    pfButtons[2].GetComponentInChildren<SuperTextMesh>().text = "<*> EXIT";
                     break;
             }
             //Set the lock icon
             if (stages.Count == 0)
             {
-                pfButtons[1].GetComponent<SpriteRenderer>().sprite = menuSpritesRegular[0];
+                pfButtons[1].GetComponentInChildren<SuperTextMesh>().text = "<!> MISSING STAGE DATA!";
             }
 
             //Stage info
             //Update only when needed
             if (lastStageIndex != selectedStageIndex) 
             {
-                GameObject customStageDisplay = GameObject.Find("CustomStageData");
-                GameObject stageInfoBox = GameObject.Find("StageInfoBox");
+                GameObject customStageDisplay = gameObject.transform.GetChild(0).gameObject;
+                GameObject stageInfoBox = gameObject.transform.GetChild(2).gameObject;
                 //Drop out if the custom stage display does not exist.
                 if (customStageDisplay == null) return;
 
@@ -172,21 +164,35 @@ namespace CustomStageSelect.Menus
                     stageIcon = stages[selectedStageIndex].preview;
                     destinationScene = stages[selectedStageIndex].sceneName;
 
-                    pfButtons[0].GetComponentInChildren<TextMesh>().text = "< Stage " + (selectedStageIndex + 1) + "/" + (stages.Count) + " >" ;
+                    pfButtons[0].GetComponentInChildren<SuperTextMesh>().text = "<c=green>CHOOSE STAGE NUM. TO INIT\n< STAGE " + (selectedStageIndex + 1) + "/" + (stages.Count) + " ></c>" ;
 
                     customStageDisplay.transform.GetChild(0).GetComponent<SpriteRenderer>().sprite = stageIcon;
-                    customStageDisplay.transform.GetChild(1).GetComponent<TextMesh>().text = stageName;
-                    customStageDisplay.transform.GetChild(3).GetComponent<TextMesh>().text = stageTime;
-                    customStageDisplay.transform.GetChild(5).GetComponent<FPHudDigit>().SetDigitValue(stageRank - 1);
+                    customStageDisplay.transform.GetChild(1).GetComponent<SuperTextMesh>().text = "<c=green>FILE:</c> " + stageName;
+                    customStageDisplay.transform.GetChild(3).GetComponent<SuperTextMesh>().text = stageTime;
+                    customStageDisplay.transform.GetChild(5).GetComponent<SuperTextMesh>().text = rankToString(stageRank);
 
-                    stageInfoBox.GetComponentInChildren<TextMesh>().text = "By: " + stageAuthor;
-                    stageInfoBox.GetComponentInChildren<SuperTextMesh>().text = stageDescription;
+                    stageInfoBox.transform.GetChild(0).GetComponent<SuperTextMesh>().text = "<c=green>DEVELOPER:</c> " + stageAuthor;
+                    stageInfoBox.transform.GetChild(1).GetComponent<SuperTextMesh>().text = stageDescription;
                 }
 
                 MenuLogSource.LogDebug("Set destination scene to: " + destinationScene);
                 selectedStageSceneName = destinationScene;
                 lastStageIndex = selectedStageIndex;
             }
+        }
+
+        private void State_Intro()
+        {
+            if (genericTimer > 0f)
+            {
+                genericTimer -= FPStage.deltaTime;
+            }
+            else
+            {
+                gameObject.transform.GetChild(7).gameObject.SetActive(false);
+                state = new FPObjectState(State_Main);
+            }
+
         }
 
         private void State_Main()
@@ -322,6 +328,7 @@ namespace CustomStageSelect.Menus
                 // "Exit"
                 else if (menuSelection == 2)
                 {
+                    introPlayed = false;
                     //Just to be sure
                     PatchStageExits.returnToLevelSelect = false;
                     //Set appropriate destination map.
@@ -344,5 +351,23 @@ namespace CustomStageSelect.Menus
             }
         }
 
+        private string rankToString(int rank)
+        {
+            switch (rank)
+            {
+                case 0:
+                    return "<c=brown>C</c>";
+                case 1:
+                    return "<c=silver>B</c>";
+                case 2:
+                    return "<c=orange>A</c>";
+                case 3:
+                    return "<c=yellow>S</c>";
+                case 4:
+                    return "<c=rainbow>S</c>";
+                default:
+                    return "<c=red>DATA CORRUPT</c>";
+            }
+        }
     }
 }

@@ -9,7 +9,7 @@ using System.Collections.Generic;
 
 namespace CustomStageSelect;
 
-[BepInPlugin("com.kuborro.plugins.fp2.customstageselect", "Custom Stage Select", "0.1.0")]
+[BepInPlugin("com.kuborro.plugins.fp2.customstageselect", "VR Arcade ROM", "1.0.0")]
 [BepInDependency("000.kuborro.libraries.fp2.fp2lib")]
 public class CustomStageSelect : BaseUnityPlugin
 {
@@ -41,12 +41,12 @@ public class CustomStageSelect : BaseUnityPlugin
         CustomStage menuStageSelect = new CustomStage
         {
             uid = "kuborro.customstageselectmenu",
-            name = "Custom Stage Select",
+            name = "Zao's VR Arcade",
             author = "Kubo",
             description = "Menu used for Custom Stage Select Mod",
             isHUB = true,
             showInCustomStageLoaders = false,
-            sceneName = "CustomStageSelect",
+            sceneName = "ZaosArcadeDebug",
             preview = icon
         };
 

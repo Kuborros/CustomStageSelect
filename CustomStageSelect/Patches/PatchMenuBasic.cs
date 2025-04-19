@@ -12,7 +12,7 @@ namespace CustomStageSelect.Patches
         static void PatchMenuBasicStart(MenuBasic __instance)
         {
             //Swap to out own Menu implementation
-            if (SceneManager.GetActiveScene().name == "CustomStageSelect")
+            if (SceneManager.GetActiveScene().name == "ZaosArcadeDebug")
             {
                 __instance.gameObject.AddComponent<MenuCustomStageSelect>();
                 GameObject.Destroy(__instance);
