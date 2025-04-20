@@ -3,7 +3,6 @@ using BepInEx.Logging;
 using CustomStageSelect.Patches;
 using FP2Lib.Stage;
 using System.Collections.Generic;
-using System.Linq;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
@@ -171,7 +170,7 @@ namespace CustomStageSelect.Menus
                     customStageDisplay.transform.GetChild(5).GetComponent<SuperTextMesh>().text = "?";
 
                     stageInfoBox.transform.GetChild(0).GetComponent<SuperTextMesh>().text = "<c=green>DEVELOPER:</c> <c=red>NO DATA</c>";
-                    stageInfoBox.transform.GetChild(1).GetComponent<SuperTextMesh>().text = "NO LEVEL ROMS FOUND ON SYSTEM BOARD!\nPLEASE INSTALL REQUIRED CHIPS PER ARCADE OPERATOR MANUAL.\nFOR LEVEL ROM PURCHASE, CONTACT ZAO ENTERPRISES SALES ASSOCIATE AT <c=yellow>GAMEBANANA</c>.";
+                    stageInfoBox.transform.GetChild(1).GetComponent<SuperTextMesh>().text = "NO STAGE ROMS FOUND ON SYSTEM BOARD!\nPLEASE INSTALL REQUIRED CHIPS PER ARCADE OPERATOR MANUAL.\nFOR STAGE ROM PURCHASE, CONTACT ZAO ENTERPRISES.\nSALES ASSOCIATE CAN BE CALLED AT <c=yellow>0-800-GAMEBANANA</c>.";
 
                     //Set so we no longer keep retrying to render the menu.
                     lastStageIndex = selectedStageIndex;
@@ -214,16 +213,18 @@ namespace CustomStageSelect.Menus
 
         private void State_Intro()
         {
+            //Skip title screen with start button;
+            if (FPStage.menuInput.pause) genericTimer = 0f;
+
             if (genericTimer > 0f)
             {
                 genericTimer -= FPStage.deltaTime;
-            }
+            }    
             else
             {
                 gameObject.transform.GetChild(7).gameObject.SetActive(false);
                 state = new FPObjectState(State_Main);
             }
-
         }
 
         private void State_Main()

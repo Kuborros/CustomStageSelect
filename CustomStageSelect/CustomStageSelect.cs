@@ -5,11 +5,10 @@ using System.IO;
 using HarmonyLib;
 using UnityEngine;
 using CustomStageSelect.Patches;
-using System.Collections.Generic;
 
 namespace CustomStageSelect;
 
-[BepInPlugin("com.kuborro.plugins.fp2.customstageselect", "VR Arcade ROM", "1.0.0")]
+[BepInPlugin("com.kuborro.plugins.fp2.customstageselect", "ModStageSelect", "1.0.0")]
 [BepInDependency("000.kuborro.libraries.fp2.fp2lib")]
 public class CustomStageSelect : BaseUnityPlugin
 {
@@ -22,7 +21,7 @@ public class CustomStageSelect : BaseUnityPlugin
     {
         Logger = base.Logger;
 
-        string assetPath = Path.Combine(Paths.GameRootPath, "mod_overrides");
+        string assetPath = Path.Combine(Paths.GameRootPath, "mod_overrides\\CustomStageSelect");
         menuAssets = AssetBundle.LoadFromFile(Path.Combine(assetPath, "customstagemenu.assets"));
         menuScene = AssetBundle.LoadFromFile(Path.Combine(assetPath, "customstagemenu.scene"));
 
