@@ -314,7 +314,7 @@ namespace CustomStageSelect.Menus
                 //Case for no stages loaded
                 if (stages.Count == 0 && menuSelection == 1)
                 {
-                    genericTimer = 0f;
+                    genericTimer = 10f;
                     FPAudio.PlayMenuSfx(21);
                     cursor.optionSelected = true;
                 }
