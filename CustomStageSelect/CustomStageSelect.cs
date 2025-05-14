@@ -8,7 +8,7 @@ using CustomStageSelect.Patches;
 
 namespace CustomStageSelect;
 
-[BepInPlugin("com.kuborro.plugins.fp2.customstageselect", "ModStageSelect", "1.0.0")]
+[BepInPlugin("com.kuborro.plugins.fp2.customstageselect", "ModStageSelect", "1.0.1")]
 [BepInDependency("000.kuborro.libraries.fp2.fp2lib")]
 public class CustomStageSelect : BaseUnityPlugin
 {

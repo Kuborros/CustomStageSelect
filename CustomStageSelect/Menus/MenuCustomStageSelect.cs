@@ -347,6 +347,9 @@ namespace CustomStageSelect.Menus
                 // "Play"
                 if (menuSelection == 1)
                 {
+                    FPStage.checkpointEnabled = false;
+                    FPStage.checkpointPos = new Vector2(0f, 0f);
+                    FPSaveManager.previousCheckpointPos = new Vector2(0f, 0f);
                     //Set to return to this menu instead of world map
                     FPSaveManager.previousStage = SceneManager.GetActiveScene().name;
                     //Important! This is how modded stages actually know what ID they are!
